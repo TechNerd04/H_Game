@@ -4,6 +4,8 @@ import { io, Socket } from 'socket.io-client';
 import HostScreen from './components/HostScreen';
 import MobileScreen from './components/MobileScreen';
 import BackgroundHexagons from './components/BackgroundHexagons';
+import ThemeToggle from './components/ThemeToggle';
+import TutorialScreen from './components/TutorialScreen';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:4000';
 
@@ -62,6 +64,7 @@ function App() {
 
   return (
     <>
+      <ThemeToggle />
       <BackgroundHexagons />
       <Routes>
         <Route
@@ -94,6 +97,7 @@ function App() {
           />
         }
       />
+      <Route path="/tutorial" element={<TutorialScreen />} />
       </Routes>
     </>
   );
@@ -109,6 +113,9 @@ function Home({
   onCreateRoom: () => void;
   onGoJoin: () => void;
 }) {
+  const [showRules, setShowRules] = useState(false);
+  const navigate = useNavigate();
+
   return (
     <div className="home-screen">
       <div className="home-hero">
@@ -131,14 +138,51 @@ function Home({
         <button
           className="button-primary huge-btn btn-join"
           onClick={onGoJoin}
+          style={{ marginBottom: '16px' }}
         >
           JOIN AS PLAYER
+        </button>
+        <button
+          className="button-primary huge-btn btn-rules"
+          onClick={() => setShowRules(true)}
+        >
+          HOW TO PLAY
         </button>
       </div>
 
       <p className="home-hint">
         Host opens on desktop · Players join on mobile
       </p>
+
+      {showRules && (
+        <div className="rules-overlay" onClick={() => setShowRules(false)}>
+          <div className="rules-modal glass-panel" onClick={e => e.stopPropagation()}>
+            <h2 className="rules-title">How to Play</h2>
+            <ul className="rules-list">
+              <li><strong>Objective:</strong> Be the first to connect a continuous path of your claimed hex cells between two opposite sides of the board.</li>
+              <li><strong>Setup:</strong> One player Hosts the game on a big screen. Up to 4 players join using the room code on their mobile devices.</li>
+              <li><strong>Gameplay:</strong> When it's your turn, select an unclaimed hexagon on the board from your device.</li>
+              <li><strong>Trivia:</strong> A trivia question will appear for all players. Answer correctly before the timer runs out!</li>
+              <li><strong>Claiming:</strong> If you answer correctly, you claim the cell. If you answer wrong, the cell remains empty, and your turn ends.</li>
+              <li><strong>Strategy:</strong> Block your opponents' paths while building your own. Use your trivia knowledge to conquer the board!</li>
+            </ul>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+              <button className="button-primary" onClick={() => setShowRules(false)}>
+                GOT IT
+              </button>
+              <button 
+                className="button-primary btn-join" 
+                onClick={() => {
+                  setShowRules(false);
+                  navigate('/tutorial');
+                }}
+              >
+                INTERACTIVE TUTORIAL
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

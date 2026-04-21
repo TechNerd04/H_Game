@@ -14,9 +14,10 @@ interface HexBoardProps {
   onCellClick?: (id: string) => void;
   interactive?: boolean;
   selectedCellId?: string | null;
+  highlightedCells?: string[];
 }
 
-export default function HexBoard({ board, players, onCellClick, interactive = false, selectedCellId = null }: HexBoardProps) {
+export default function HexBoard({ board, players, onCellClick, interactive = false, selectedCellId = null, highlightedCells = [] }: HexBoardProps) {
   const hexSize = 45;
   const sqrt3 = Math.sqrt(3);
 
@@ -65,8 +66,9 @@ export default function HexBoard({ board, players, onCellClick, interactive = fa
         {Object.values(board).map((cell) => {
           const { x, y } = getCenter(cell.q, cell.r);
           const isClaimed = cell.ownerId !== null;
+          const isHighlighted = highlightedCells.includes(cell.id);
           return (
-            <g key={cell.id} className={`hex-cell ${isClaimed ? 'claimed' : ''}`}>
+            <g key={cell.id} className={`hex-cell ${isClaimed ? 'claimed' : ''} ${isHighlighted ? 'tutorial-highlight' : ''}`}>
               <polygon
                 points={getHexPoints(x, y)}
                 fill={getPlayerColor(cell.id, cell.ownerId)}
@@ -87,7 +89,7 @@ export default function HexBoard({ board, players, onCellClick, interactive = fa
                   y={y}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  fill="white"
+                  fill="var(--text-main)"
                   fontSize={hexSize * 0.6}
                   fontWeight="900"
                   style={{ pointerEvents: 'none', opacity: 0.8 }}

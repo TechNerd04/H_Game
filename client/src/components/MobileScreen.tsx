@@ -23,7 +23,7 @@ export default function MobileScreen({
         setTimeout(() => {
           setFeedback(null);
           setHasAnswered(false);
-        }, 2500);
+        }, 3000);
       }
     };
 
@@ -69,11 +69,39 @@ export default function MobileScreen({
   const activePlayer = players[activePlayerIndex] || {};
   const isMyTurn = activePlayer.socketId === currentPlayer.socketId;
 
+  // Pre-sort players by score (highest to lowest)
+  const sortedPlayers = [...players].sort((a: any, b: any) => b.score - a.score);
+
   // Render temporary full-screen feedback
   if (feedback !== null) {
     return (
       <div className={`feedback-screen ${feedback ? 'feedback-correct' : 'feedback-wrong'}`}>
-        <div>{feedback ? 'CORRECT!' : 'WRONG ✖'}</div>
+        <div style={{ fontSize: '3rem', fontWeight: 900, marginBottom: '24px' }}>{feedback ? 'CORRECT!' : 'WRONG ✖'}</div>
+        <div style={{ width: '90%', maxWidth: '350px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {sortedPlayers.map((p: any) => (
+            <div key={p.socketId} style={{ background: 'rgba(0,0,0,0.3)', padding: '14px 20px', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'white' }}>{p.name}</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'white' }}>{p.score}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Reveal Phase (for players who didn't answer / timed out)
+  if (phase === 'QUESTION_REVEAL') {
+    return (
+      <div className="mobile-screen" style={{ justifyContent: 'center' }}>
+        <h2 style={{ marginBottom: '20px', letterSpacing: '2px', color: 'var(--text-muted)' }}>CURRENT SCORES</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '350px' }}>
+          {sortedPlayers.map((p: any) => (
+            <div key={p.socketId} className="glass-panel" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: `5px solid ${p.color}` }}>
+              <span style={{ fontSize: '1.2rem', fontWeight: 700, color: p.color }}>{p.name}</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--text-main)' }}>{p.score}</span>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

@@ -223,11 +223,20 @@ const PLAYER_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'];
             const timedOutRoom = rooms[code];
             if (timedOutRoom && timedOutRoom.phase === "QUESTION" && timedOutRoom.selectedCellId === cellId) {
               // Time finished without a correct answer
-              timedOutRoom.phase = "TURN_START";
-              timedOutRoom.selectedCellId = null;
-              timedOutRoom.currentQuestion = null;
-              timedOutRoom.activePlayerIndex = (timedOutRoom.activePlayerIndex + 1) % timedOutRoom.players.length;
+              timedOutRoom.phase = "QUESTION_REVEAL";
+              timedOutRoom.currentQuestion.correct = -1;
               io.to(code).emit("room-updated", { ...timedOutRoom, questionTimeout: null });
+              
+              setTimeout(() => {
+                const tr = rooms[code];
+                if (tr && tr.phase === "QUESTION_REVEAL") {
+                  tr.phase = "TURN_START";
+                  tr.selectedCellId = null;
+                  tr.currentQuestion = null;
+                  tr.activePlayerIndex = (tr.activePlayerIndex + 1) % tr.players.length;
+                  io.to(code).emit("room-updated", { ...tr, questionTimeout: null });
+                }
+              }, 3000);
             }
           }, 15000);
         }
@@ -254,20 +263,29 @@ const PLAYER_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'];
 
       if (isCorrect) {
         if (room.questionTimeout) clearTimeout(room.questionTimeout);
-        // Correct: claim the cell
-        room.board[room.selectedCellId].ownerId = answeringPlayer.socketId;
+        // Correct: update score immediately and go to reveal phase
         answeringPlayer.score += 1;
-        
-        if (checkWinCondition(room.board, answeringPlayer.socketId)) {
-          room.phase = "GAME_OVER";
-          room.winner = answeringPlayer;
-        } else {
-          room.phase = "TURN_START";
-          room.selectedCellId = null;
-          room.currentQuestion = null;
-          room.activePlayerIndex = room.players.findIndex(p => p.socketId === answeringPlayer.socketId);
-        }
+        room.phase = "QUESTION_REVEAL";
+        room.currentQuestion.correct = answerIndex;
         io.to(code).emit("room-updated", { ...room, questionTimeout: null });
+        
+        setTimeout(() => {
+          const r = rooms[code];
+          if (r && r.phase === "QUESTION_REVEAL") {
+            r.board[r.selectedCellId].ownerId = answeringPlayer.socketId;
+            
+            if (checkWinCondition(r.board, answeringPlayer.socketId)) {
+              r.phase = "GAME_OVER";
+              r.winner = answeringPlayer;
+            } else {
+              r.phase = "TURN_START";
+              r.selectedCellId = null;
+              r.currentQuestion = null;
+              r.activePlayerIndex = r.players.findIndex(p => p.socketId === answeringPlayer.socketId);
+            }
+            io.to(code).emit("room-updated", { ...r, questionTimeout: null });
+          }
+        }, 3000);
       } else {
         // Wrong: add to answeredPlayers
         room.answeredPlayers.push(socket.id);
@@ -275,11 +293,20 @@ const PLAYER_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'];
         // If all players have answered incorrectly
         if (room.answeredPlayers.length >= room.players.length) {
           if (room.questionTimeout) clearTimeout(room.questionTimeout);
-          room.phase = "TURN_START";
-          room.selectedCellId = null;
-          room.currentQuestion = null;
-          room.activePlayerIndex = (room.activePlayerIndex + 1) % room.players.length;
+          room.phase = "QUESTION_REVEAL";
+          room.currentQuestion.correct = -1;
           io.to(code).emit("room-updated", { ...room, questionTimeout: null });
+          
+          setTimeout(() => {
+            const r = rooms[code];
+            if (r && r.phase === "QUESTION_REVEAL") {
+              r.phase = "TURN_START";
+              r.selectedCellId = null;
+              r.currentQuestion = null;
+              r.activePlayerIndex = (r.activePlayerIndex + 1) % r.players.length;
+              io.to(code).emit("room-updated", { ...r, questionTimeout: null });
+            }
+          }, 3000);
         }
       }
     }

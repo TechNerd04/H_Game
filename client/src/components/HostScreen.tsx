@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import HexBoard from './HexBoard';
-import { playWinSound } from '../utils/sound';
+import { playWinSound, playMainTheme, playQuestionTheme, stopTheme } from '../utils/sound';
 
 export default function HostScreen({
   socket,
@@ -13,10 +13,24 @@ export default function HostScreen({
   const questionKeyRef = useRef(0);
 
   useEffect(() => {
-    if (roomData?.phase === 'GAME_OVER') {
+    // Stop music when component unmounts (e.g. host leaves)
+    return () => stopTheme();
+  }, []);
+
+  const isQuestionActive = roomData?.phase === 'QUESTION_COUNTDOWN' || roomData?.phase === 'QUESTION' || roomData?.phase === 'QUESTION_REVEAL';
+
+  useEffect(() => {
+    if (!roomData) return;
+
+    if (roomData.phase === 'GAME_OVER') {
       playWinSound();
+      stopTheme();
+    } else if (isQuestionActive) {
+      playQuestionTheme();
+    } else {
+      playMainTheme();
     }
-  }, [roomData?.phase]);
+  }, [roomData?.phase, isQuestionActive]);
 
   if (!roomData) {
     return (
@@ -61,12 +75,6 @@ export default function HostScreen({
             &nbsp;— Pick a Hexagon!
           </div>
         );
-      case 'QUESTION':
-        return (
-          <div>
-            Players are Answering…
-          </div>
-        );
       case 'GAME_OVER':
         return (
           <div style={{ color: winner?.color, fontSize: '2rem' }}>
@@ -101,7 +109,7 @@ export default function HostScreen({
   };
 
   return (
-    <div className="layout-host">
+    <div className={`layout-host ${isQuestionActive ? 'lifted' : ''}`}>
       {/* ── Left panel: Players 1, 3... ── */}
       <div className="host-side-panel">
         {players.length === 0 && (
@@ -118,7 +126,9 @@ export default function HostScreen({
       {/* ── Center panel: Board ── */}
       <div className="host-center">
         {/* Status bar */}
-        <div className="host-top-bar glass-panel">{getTopBarContent()}</div>
+        {!isQuestionActive && (
+          <div className="host-top-bar glass-panel">{getTopBarContent()}</div>
+        )}
 
         {/* Hex Board */}
         <div className="hex-board-container">
@@ -161,42 +171,56 @@ export default function HostScreen({
         })}
       </div>
 
-      {/* ── Question Countdown Overlay ── */}
-      {phase === 'QUESTION_COUNTDOWN' && (
-        <div className="countdown-screen" style={{ position: 'absolute' }}>
-          <div className="countdown-label">GET READY</div>
-          <div key={roomData.countdown} className="countdown-number">
-            {roomData.countdown}
-          </div>
-        </div>
-      )}
-
       {/* ── Question Overlay ── */}
       <div
         className={`question-overlay ${
-          phase === 'QUESTION' && currentQuestion ? 'active' : ''
+          isQuestionActive && currentQuestion ? 'active' : ''
         }`}
       >
         {currentQuestion && (
           <>
             <div className="question-text">{currentQuestion.text}</div>
-            <div className="question-options">
-              {currentQuestion.options.map((opt: string, i: number) => (
-                <div key={i} className={`q-option q-option-${i}`}>
-                  <span style={{ opacity: 0.6, marginRight: 10 }}>
-                    {['A', 'B', 'C', 'D'][i]}
-                  </span>
-                  {opt}
+            <div style={{ position: 'relative' }}>
+              <div className={`question-options ${phase === 'QUESTION_COUNTDOWN' ? 'hidden' : ''}`}>
+                {currentQuestion.options.map((opt: string, i: number) => {
+                  let revealStyle: any = {};
+                  if (phase === 'QUESTION_REVEAL') {
+                    if (currentQuestion.correct === -1 || currentQuestion.correct !== i) {
+                      revealStyle = { opacity: 0.3, background: 'var(--timer-bg)', boxShadow: 'none' };
+                    } else {
+                      revealStyle = { transform: 'scale(1.05)', boxShadow: '0 0 20px rgba(255,255,255,0.4)', zIndex: 10 };
+                    }
+                  }
+
+                  return (
+                    <div key={i} className={`q-option q-option-${i}`} style={{ transition: 'all 0.3s ease', ...revealStyle }}>
+                      <span style={{ opacity: 0.6, marginRight: 10 }}>
+                        {['A', 'B', 'C', 'D'][i]}
+                      </span>
+                      {opt}
+                    </div>
+                  );
+                })}
+              </div>
+              {phase === 'QUESTION_COUNTDOWN' && (
+                <div 
+                  key={roomData.countdown}
+                  className="countdown-number" 
+                  style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '6rem', color: 'var(--accent)' }}
+                >
+                  {roomData.countdown}
                 </div>
-              ))}
+              )}
             </div>
-            <div className="progress-bar-container">
-              <div
-                key={questionKeyRef.current}
-                className="progress-bar"
-                style={{ animation: 'timer-drain 15s linear forwards' }}
-              />
-            </div>
+            {phase === 'QUESTION' && (
+              <div className="progress-bar-container">
+                <div
+                  key={questionKeyRef.current}
+                  className="progress-bar"
+                  style={{ animation: 'timer-drain 15s linear forwards' }}
+                />
+              </div>
+            )}
           </>
         )}
       </div>
