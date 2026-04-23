@@ -6,6 +6,7 @@ import MobileScreen from './components/MobileScreen';
 import BackgroundHexagons from './components/BackgroundHexagons';
 import ThemeToggle from './components/ThemeToggle';
 import TutorialScreen from './components/TutorialScreen';
+import { playBackgroundPlaylist } from './utils/sound';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:4000';
 
@@ -26,15 +27,25 @@ function App() {
   const [roomData, setRoomData] = useState<any>(null);
   const [currentPlayer, setCurrentPlayer] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [hasAcknowledged, setHasAcknowledged] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const socket = getSocket();
 
-    const onConnect = () => setIsConnected(true);
+    const onConnect = () => {
+      setIsConnected(true);
+      const savedCode = sessionStorage.getItem('roomCode');
+      const savedRole = sessionStorage.getItem('role');
+      if (savedCode && savedRole === 'host') {
+        socket.emit('rejoin-host', savedCode);
+      }
+    };
     const onDisconnect = () => setIsConnected(false);
     const onRoomCreated = (room: any) => {
       console.log('Room created!', room);
+      sessionStorage.setItem('roomCode', room.id);
+      sessionStorage.setItem('role', 'host');
       setRoomData(room);
       navigate(`/host`);
     };
@@ -44,6 +55,13 @@ function App() {
 
     // Initial check
     setIsConnected(socket.connected);
+    if (socket.connected) {
+      const savedCode = sessionStorage.getItem('roomCode');
+      const savedRole = sessionStorage.getItem('role');
+      if (savedCode && savedRole === 'host') {
+        socket.emit('rejoin-host', savedCode);
+      }
+    }
 
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
@@ -61,6 +79,35 @@ function App() {
       socket.off('join-error', onJoinError);
     };
   }, [navigate]);
+
+  if (!hasAcknowledged) {
+    return (
+      <>
+        <ThemeToggle />
+        <BackgroundHexagons />
+        <div className="home-screen" style={{ justifyContent: 'center', alignItems: 'center' }}>
+          <div className="glass-panel" style={{ maxWidth: '600px', padding: '40px', textAlign: 'center', margin: '20px' }}>
+            <div className="home-hex-deco" style={{ animation: 'none', marginBottom: '20px' }}>⬡</div>
+            <h2 style={{ marginBottom: '20px', color: 'var(--text-main)', letterSpacing: '2px' }}>ATTENTION</h2>
+            <p style={{ fontSize: '1.2rem', lineHeight: '1.6', marginBottom: '30px', color: 'var(--text-muted)' }}>
+              This game is create for HCI course and it is done by the following students:
+              <br /><br />
+              <strong style={{ color: 'var(--text-main)' }}>Ahmad, Abdullah, Khalifa, Hazza</strong>
+            </p>
+            <button 
+              className="button-primary huge-btn" 
+              onClick={() => {
+                setHasAcknowledged(true);
+                playBackgroundPlaylist();
+              }}
+            >
+              I Acknowledge
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -115,6 +162,10 @@ function Home({
 }) {
   const [showRules, setShowRules] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    playBackgroundPlaylist();
+  }, []);
 
   return (
     <div className="home-screen">
@@ -199,6 +250,12 @@ function GuestJoin({
 }) {
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
+
+  useEffect(() => {
+    if (!currentPlayer) {
+      playBackgroundPlaylist();
+    }
+  }, [currentPlayer]);
 
   if (currentPlayer && socket) {
     return (

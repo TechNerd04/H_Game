@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import HexBoard from './HexBoard';
-import { playWinSound, playLoseSound } from '../utils/sound';
+import { playWinSound, playLoseSound, playCountdownSound, stopBackgroundPlaylist } from '../utils/sound';
 
 export default function MobileScreen({
   socket,
@@ -17,13 +17,17 @@ export default function MobileScreen({
   const [hasAnswered, setHasAnswered] = useState(false);
 
   useEffect(() => {
+    stopBackgroundPlaylist();
+  }, []);
+
+  useEffect(() => {
     const handleFeedback = (res: { correct: boolean }) => {
       setFeedback(res.correct);
       if (res.correct) {
         setTimeout(() => {
           setFeedback(null);
           setHasAnswered(false);
-        }, 3000);
+        }, 5000);
       }
     };
 
@@ -38,6 +42,8 @@ export default function MobileScreen({
       const isWinner = roomData.winner?.socketId === currentPlayer.socketId;
       if (isWinner) playWinSound();
       else playLoseSound();
+    } else if (roomData?.phase === 'QUESTION_COUNTDOWN') {
+      playCountdownSound();
     }
   }, [roomData?.phase, roomData?.winner, currentPlayer]);
 
@@ -195,7 +201,7 @@ export default function MobileScreen({
         <div className="countdown-label">GET READY</div>
         {/* We use key={roomData.countdown} to force re-trigger the CSS animation each second */}
         <div key={roomData.countdown} className="countdown-number">
-          {roomData.countdown}
+          {roomData.countdown === 1 ? 'GO' : roomData.countdown - 1}
         </div>
       </div>
     );

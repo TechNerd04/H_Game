@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import HexBoard from './HexBoard';
-import { playWinSound, playMainTheme, playQuestionTheme, stopTheme } from '../utils/sound';
+import { playWinSound, playCountdownSound, playBackgroundPlaylist, stopBackgroundPlaylist, playStartOfQuestionSound, stopStartOfQuestionSound } from '../utils/sound';
 
 export default function HostScreen({
   socket,
@@ -14,7 +14,7 @@ export default function HostScreen({
 
   useEffect(() => {
     // Stop music when component unmounts (e.g. host leaves)
-    return () => stopTheme();
+    return () => stopBackgroundPlaylist();
   }, []);
 
   const isQuestionActive = roomData?.phase === 'QUESTION_COUNTDOWN' || roomData?.phase === 'QUESTION' || roomData?.phase === 'QUESTION_REVEAL';
@@ -23,14 +23,24 @@ export default function HostScreen({
     if (!roomData) return;
 
     if (roomData.phase === 'GAME_OVER') {
+      stopBackgroundPlaylist();
+      stopStartOfQuestionSound();
       playWinSound();
-      stopTheme();
-    } else if (isQuestionActive) {
-      playQuestionTheme();
+    } else if (roomData.phase === 'QUESTION_COUNTDOWN') {
+      stopBackgroundPlaylist();
+      stopStartOfQuestionSound();
+      playCountdownSound();
+    } else if (roomData.phase === 'QUESTION') {
+      stopBackgroundPlaylist();
+      playStartOfQuestionSound();
+    } else if (roomData.phase === 'QUESTION_REVEAL') {
+      stopBackgroundPlaylist();
+      stopStartOfQuestionSound();
     } else {
-      playMainTheme();
+      stopStartOfQuestionSound();
+      playBackgroundPlaylist();
     }
-  }, [roomData?.phase, isQuestionActive]);
+  }, [roomData?.phase]);
 
   if (!roomData) {
     return (
@@ -110,17 +120,15 @@ export default function HostScreen({
 
   return (
     <div className={`layout-host ${isQuestionActive ? 'lifted' : ''}`}>
-      {/* ── Left panel: Players 1, 3... ── */}
+      {/* ── Left panel: Active Player ── */}
       <div className="host-side-panel">
-        {players.length === 0 && (
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', padding: '8px' }}>
-            Waiting for players to join…
+        {phase === 'LOBBY' ? (
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', padding: '8px', textAlign: 'center' }}>
+            {players.length === 0 ? 'Waiting for players to join…' : 'Waiting to start...'}
           </p>
+        ) : (
+          activePlayer && renderPlayerCard(activePlayer, activePlayerIndex)
         )}
-        {players.map((p: any, i: number) => {
-          if (i % 2 !== 0) return null; // Left side gets index 0, 2
-          return renderPlayerCard(p, i);
-        })}
       </div>
 
       {/* ── Center panel: Board ── */}
@@ -163,12 +171,17 @@ export default function HostScreen({
         )}
       </div>
 
-      {/* ── Right panel: Players 2, 4... ── */}
+      {/* ── Right panel: Leaderboard ── */}
       <div className="host-side-panel">
-        {players.map((p: any, i: number) => {
-          if (i % 2 === 0) return null; // Right side gets index 1, 3
-          return renderPlayerCard(p, i);
-        })}
+        <h2 style={{ marginBottom: '20px', letterSpacing: '2px', color: 'var(--text-muted)', textAlign: 'center', fontSize: '1.2rem' }}>LEADERBOARD</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+          {[...players].sort((a: any, b: any) => b.score - a.score).map((p: any) => (
+            <div key={p.socketId} className="glass-panel" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: `5px solid ${p.color}` }}>
+              <span style={{ fontSize: '1.2rem', fontWeight: 700, color: p.color }}>{p.name}</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--text-main)' }}>{p.score}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* ── Question Overlay ── */}
@@ -208,7 +221,7 @@ export default function HostScreen({
                   className="countdown-number" 
                   style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '6rem', color: 'var(--accent)' }}
                 >
-                  {roomData.countdown}
+                  {roomData.countdown === 1 ? 'GO' : roomData.countdown - 1}
                 </div>
               )}
             </div>

@@ -137,6 +137,17 @@ io.on("connection", (socket) => {
     socket.emit("room-created", rooms[code]);
   });
 
+  socket.on("rejoin-host", (code) => {
+    const room = rooms[code];
+    if (room) {
+      room.hostSocketId = socket.id;
+      socket.join(code);
+      socket.emit("room-updated", room);
+    } else {
+      socket.emit("error", "Room not found or game already over.");
+    }
+  });
+
 const PLAYER_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'];
 
   socket.on("join-room", ({ code, name }) => {
@@ -193,7 +204,7 @@ const PLAYER_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'];
       shuffledQuestion.correct = shuffledQuestion.options.indexOf(correctAnswerText);
       room.currentQuestion = shuffledQuestion;
       room.phase = "QUESTION_COUNTDOWN";
-      room.countdown = 3;
+      room.countdown = 4;
       room.answeredPlayers = [];
       // We don't send the 'correct' index to prevent cheating on mobile
       const clientQuestion = { ...room.currentQuestion };
@@ -236,7 +247,7 @@ const PLAYER_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'];
                   tr.activePlayerIndex = (tr.activePlayerIndex + 1) % tr.players.length;
                   io.to(code).emit("room-updated", { ...tr, questionTimeout: null });
                 }
-              }, 3000);
+              }, 5000);
             }
           }, 15000);
         }
@@ -285,7 +296,7 @@ const PLAYER_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'];
             }
             io.to(code).emit("room-updated", { ...r, questionTimeout: null });
           }
-        }, 3000);
+        }, 5000);
       } else {
         // Wrong: add to answeredPlayers
         room.answeredPlayers.push(socket.id);
@@ -306,7 +317,7 @@ const PLAYER_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'];
               r.activePlayerIndex = (r.activePlayerIndex + 1) % r.players.length;
               io.to(code).emit("room-updated", { ...r, questionTimeout: null });
             }
-          }, 3000);
+          }, 5000);
         }
       }
     }
@@ -318,6 +329,7 @@ const PLAYER_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'];
   });
 });
 
-server.listen(4000, () => {
-  console.log("Server listening on port 4000");
+const PORT = process.env.PORT || 4000;
+server.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
 });

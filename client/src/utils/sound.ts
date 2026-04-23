@@ -65,6 +65,78 @@ export function playLoseSound() {
   }
 }
 
+import goSoundUrl from './321go.wav';
+import bg1Url from './background1.mp3';
+import bg2Url from './background2.mp3';
+import bg3Url from './background3.mp3';
+import startOfQuestionUrl from './start of question.mp3';
+
+export function playCountdownSound() {
+  try {
+    const audio = new Audio(goSoundUrl);
+    audio.play().catch(e => console.warn("Audio playback failed", e));
+  } catch (e) {
+    console.warn("Audio initialization failed", e);
+  }
+}
+
+let startOfQuestionAudio: HTMLAudioElement | null = null;
+
+export function playStartOfQuestionSound() {
+  try {
+    if (startOfQuestionAudio) {
+      startOfQuestionAudio.pause();
+      startOfQuestionAudio.currentTime = 0;
+    }
+    startOfQuestionAudio = new Audio(startOfQuestionUrl);
+    startOfQuestionAudio.play().catch(e => console.warn("Audio playback failed", e));
+  } catch (e) {
+    console.warn("Audio initialization failed", e);
+  }
+}
+
+export function stopStartOfQuestionSound() {
+  try {
+    if (startOfQuestionAudio) {
+      startOfQuestionAudio.pause();
+      startOfQuestionAudio.currentTime = 0;
+    }
+  } catch (e) {
+    console.warn("Audio pause failed", e);
+  }
+}
+
+const bgPlaylist = [bg1Url, bg2Url, bg3Url];
+let bgAudio: HTMLAudioElement | null = null;
+let currentBgIndex = 0;
+
+export function playBackgroundPlaylist() {
+  try {
+    if (!bgAudio) {
+      bgAudio = new Audio(bgPlaylist[currentBgIndex]);
+      bgAudio.addEventListener('ended', () => {
+        currentBgIndex = (currentBgIndex + 1) % bgPlaylist.length;
+        bgAudio!.src = bgPlaylist[currentBgIndex];
+        bgAudio!.play().catch(e => console.warn(e));
+      });
+      // Optionally loop if there is only 1 track, though we have 3.
+    }
+    bgAudio.play().catch(e => console.warn('Background music playback failed', e));
+  } catch (e) {
+    console.warn("Background audio initialization failed", e);
+  }
+}
+
+export function stopBackgroundPlaylist() {
+  try {
+    if (bgAudio) {
+      bgAudio.pause();
+    }
+  } catch (e) {
+    console.warn("Background audio pause failed", e);
+  }
+}
+
 // --- Background Music Synthesizer ---
 
 let currentTheme: 'MAIN' | 'QUESTION' | null = null;
