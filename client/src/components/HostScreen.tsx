@@ -120,6 +120,21 @@ export default function HostScreen({
 
   return (
     <div className={`layout-host ${isQuestionActive ? 'lifted' : ''}`}>
+      <button 
+        className="button-primary" 
+        style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 100, padding: '8px 16px', fontSize: '1rem', width: 'auto' }}
+        onClick={() => {
+          if (phase !== 'LOBBY' && phase !== 'GAME_OVER') {
+            if (window.confirm("Are you sure you want to return home? This will end the game for everyone.")) {
+              window.location.href = '/';
+            }
+          } else {
+            window.location.href = '/';
+          }
+        }}
+      >
+        ← Home
+      </button>
       {/* ── Left panel: Active Player ── */}
       <div className="host-side-panel">
         {phase === 'LOBBY' ? (
@@ -140,7 +155,12 @@ export default function HostScreen({
 
         {/* Hex Board */}
         <div className="hex-board-container">
-          <HexBoard board={board} players={players} selectedCellId={roomData.selectedCellId} />
+          <HexBoard 
+            board={board} 
+            players={players} 
+            selectedCellId={roomData.selectedCellId} 
+            winnerId={phase === 'GAME_OVER' && winner ? winner.socketId : null} 
+          />
         </div>
 
         {/* Start button (only in lobby) */}
@@ -194,7 +214,7 @@ export default function HostScreen({
           <>
             <div className="question-text">{currentQuestion.text}</div>
             <div style={{ position: 'relative' }}>
-              <div className={`question-options ${phase === 'QUESTION_COUNTDOWN' ? 'hidden' : ''}`}>
+              <div className="question-options" style={{ visibility: phase === 'QUESTION_COUNTDOWN' ? 'hidden' : 'visible' }}>
                 {currentQuestion.options.map((opt: string, i: number) => {
                   let revealStyle: any = {};
                   if (phase === 'QUESTION_REVEAL') {

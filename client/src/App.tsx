@@ -278,6 +278,13 @@ function GuestJoin({
 
   return (
     <div className="home-screen">
+      <button 
+        className="button-primary" 
+        style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 100, padding: '8px 16px', fontSize: '1rem', width: 'auto' }}
+        onClick={() => window.location.href = '/'}
+      >
+        ← Home
+      </button>
       <div className="home-hero">
         <div className="home-hex-deco">⬡</div>
         <h1 className="home-title" style={{ fontSize: '2.5rem' }}>

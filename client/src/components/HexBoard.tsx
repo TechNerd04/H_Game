@@ -15,9 +15,10 @@ interface HexBoardProps {
   interactive?: boolean;
   selectedCellId?: string | null;
   highlightedCells?: string[];
+  winnerId?: string | null;
 }
 
-export default function HexBoard({ board, players, onCellClick, interactive = false, selectedCellId = null, highlightedCells = [] }: HexBoardProps) {
+export default function HexBoard({ board, players, onCellClick, interactive = false, selectedCellId = null, highlightedCells = [], winnerId = null }: HexBoardProps) {
   const hexSize = 45;
   const sqrt3 = Math.sqrt(3);
 
@@ -39,10 +40,12 @@ export default function HexBoard({ board, players, onCellClick, interactive = fa
   };
 
   const getPlayerColor = (cellId: string, ownerId: string | null) => {
+    if (ownerId) {
+      const player = players.find(p => p.socketId === ownerId);
+      if (player) return player.color;
+    }
     if (cellId === selectedCellId) return 'gray';
-    if (!ownerId) return 'var(--hex-neutral)';
-    const player = players.find(p => p.socketId === ownerId);
-    return player ? player.color : 'var(--hex-neutral)';
+    return 'var(--hex-neutral)';
   };
 
   // Find bounding box to center SVG
@@ -67,8 +70,9 @@ export default function HexBoard({ board, players, onCellClick, interactive = fa
           const { x, y } = getCenter(cell.q, cell.r);
           const isClaimed = cell.ownerId !== null;
           const isHighlighted = highlightedCells.includes(cell.id);
+          const isWinnerCell = winnerId && cell.ownerId === winnerId;
           return (
-            <g key={cell.id} className={`hex-cell ${isClaimed ? 'claimed' : ''} ${isHighlighted ? 'tutorial-highlight' : ''}`}>
+            <g key={cell.id} className={`hex-cell ${isClaimed ? 'claimed' : ''} ${isHighlighted ? 'tutorial-highlight' : ''} ${isWinnerCell ? 'winner-flash' : ''}`}>
               <polygon
                 points={getHexPoints(x, y)}
                 fill={getPlayerColor(cell.id, cell.ownerId)}
