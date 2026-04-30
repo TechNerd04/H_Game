@@ -185,6 +185,13 @@ function Home({
       </div>
 
       <div className="glass-panel home-card" style={{ marginTop: '10px' }}>
+        <button
+          className="button-primary huge-btn btn-join"
+          onClick={onGoJoin}
+          style={{ marginBottom: '16px' }}
+        >
+          JOIN AS PLAYER
+        </button>
         <button 
           className="button-primary huge-btn" 
           onClick={onCreateRoom}
@@ -192,13 +199,6 @@ function Home({
           style={{ marginBottom: '16px' }}
         >
           ⬡ &nbsp; HOST A ROOM
-        </button>
-        <button
-          className="button-primary huge-btn btn-join"
-          onClick={onGoJoin}
-          style={{ marginBottom: '16px' }}
-        >
-          JOIN AS PLAYER
         </button>
         <button
           className="button-primary huge-btn btn-rules"

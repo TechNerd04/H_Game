@@ -707,6 +707,15 @@ body {
   padding: 20px;
 }
 
+.tutorial-overlay-box {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  z-index: 50;
+  text-align: center;
+}
+
 .rules-modal {
   max-width: 600px;
   width: 100%;
