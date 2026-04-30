@@ -15,6 +15,8 @@
   --accent:         #6366f1;
   --accent-glow:    rgba(99, 102, 241, 0.4);
   --shadow-color:   rgba(0,0,0,0.4);
+  --input-bg:       rgba(255,255,255,0.05);
+  --overlay-bg:     rgba(10, 15, 30, 0.97);
 
   /* Player colours */
   --p1: #ef4444;
@@ -38,6 +40,8 @@
   --accent:         #4f46e5;
   --accent-glow:    rgba(79, 70, 229, 0.3);
   --shadow-color:   rgba(0,0,0,0.1);
+  --input-bg:       rgba(0,0,0,0.05);
+  --overlay-bg:     rgba(255, 255, 255, 0.97);
 
   /* Hex */
   --hex-neutral:    #e2e8f0;
@@ -70,7 +74,7 @@ body {
    ===================================================== */
 
 .glass-panel {
-  background: rgba(15, 23, 42, 0.7);
+  background: var(--panel-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-color);
@@ -119,7 +123,7 @@ body {
    HOME SCREEN
    ===================================================== */
 .home-screen {
-  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -147,7 +151,7 @@ body {
   font-size: 4.5rem;
   font-weight: 900;
   letter-spacing: -2px;
-  background: linear-gradient(135deg, #f1f5f9 30%, var(--accent) 100%);
+  background: linear-gradient(135deg, var(--text-main) 30%, var(--accent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -193,7 +197,7 @@ body {
 .join-input {
   width: 100%;
   padding: 16px;
-  background: rgba(255,255,255,0.05);
+  background: var(--input-bg);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   color: var(--text-main);
@@ -220,7 +224,7 @@ body {
   display: grid;
   grid-template-columns: 220px 1fr 220px;
   grid-template-rows: 1fr;
-  height: 100vh;
+  height: 100dvh;
   padding: 16px;
   gap: 16px;
   overflow: hidden;
@@ -362,7 +366,7 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(10, 15, 30, 0.97);
+  background: var(--overlay-bg);
   backdrop-filter: blur(20px);
   border-top: 1px solid var(--border-color);
   padding: 28px 40px;
@@ -434,7 +438,7 @@ body {
    MOBILE SCREENS
    ===================================================== */
 .mobile-screen {
-  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -467,7 +471,7 @@ body {
 
 /* Question screen buttons for mobile */
 .q-screen-mobile {
-  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   padding: 12px;
@@ -527,7 +531,7 @@ body {
 
 /* Full screen feedback */
 .feedback-screen {
-  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -567,17 +571,29 @@ body {
 }
 
 .hex-cell.winner-flash {
-  animation: winner-flash-anim 0.6s ease-in-out infinite alternate;
+  /* Animation moved to polygon for browser reliability */
 }
 
 .hex-cell.tutorial-highlight {
-  filter: brightness(1.4) drop-shadow(0 0 12px var(--accent));
-  animation: pulse-cell 0.8s ease-in-out infinite;
+  /* Remove buggy SVG filter animation on group */
 }
 
-@keyframes winner-flash-anim {
-  0% { filter: brightness(1.1) drop-shadow(0 0 5px rgba(255,255,255,0.5)); }
-  100% { filter: brightness(1.8) drop-shadow(0 0 20px rgba(255,255,255,1)); }
+.hex-cell.tutorial-highlight polygon {
+  animation: tutorial-flash 1s ease-in-out infinite;
+}
+
+@keyframes tutorial-flash {
+  0%, 100% { fill: var(--hex-neutral); stroke-width: 4px; stroke: var(--hex-stroke); }
+  50% { fill: var(--accent); stroke-width: 4px; stroke: var(--hex-stroke); }
+}
+
+.hex-cell.winner-flash polygon {
+  animation: winner-flash-poly 1s ease-in-out infinite;
+}
+
+@keyframes winner-flash-poly {
+  0%, 100% { opacity: 1; stroke: var(--hex-stroke); }
+  50% { fill: white; opacity: 0.8; stroke: var(--hex-stroke); }
 }
 
 @keyframes pulse-cell {
@@ -734,7 +750,7 @@ body {
   font-size: 1.05rem;
   line-height: 1.5;
   color: var(--text-main);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--input-bg);
   padding: 14px;
   border-radius: 12px;
   border: 1px solid var(--border-color);

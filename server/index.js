@@ -177,6 +177,16 @@ const PLAYER_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b'];
     }
   });
 
+  socket.on("destroy-room", (code) => {
+    const room = rooms[code];
+    if (room && room.hostSocketId === socket.id) {
+      if (room.countdownInterval) clearInterval(room.countdownInterval);
+      if (room.questionTimeout) clearTimeout(room.questionTimeout);
+      io.to(code).emit("room-destroyed");
+      delete rooms[code];
+    }
+  });
+
   socket.on("select-cell", ({ code, cellId }) => {
     const room = rooms[code];
     if (room && room.board[cellId] && !room.board[cellId].ownerId) {

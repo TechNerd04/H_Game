@@ -52,6 +52,11 @@ function App() {
     const onRoomUpdated = (room: any) => setRoomData(room);
     const onJoinSuccess = (player: any) => setCurrentPlayer(player);
     const onJoinError = (msg: string) => alert('Error: ' + msg);
+    const onRoomDestroyed = () => {
+      sessionStorage.removeItem('roomCode');
+      sessionStorage.removeItem('role');
+      window.location.href = '/';
+    };
 
     // Initial check
     setIsConnected(socket.connected);
@@ -69,6 +74,7 @@ function App() {
     socket.on('room-updated', onRoomUpdated);
     socket.on('joined-success', onJoinSuccess);
     socket.on('join-error', onJoinError);
+    socket.on('room-destroyed', onRoomDestroyed);
 
     return () => {
       socket.off('connect', onConnect);
@@ -77,6 +83,7 @@ function App() {
       socket.off('room-updated', onRoomUpdated);
       socket.off('joined-success', onJoinSuccess);
       socket.off('join-error', onJoinError);
+      socket.off('room-destroyed', onRoomDestroyed);
     };
   }, [navigate]);
 

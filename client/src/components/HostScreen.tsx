@@ -126,10 +126,10 @@ export default function HostScreen({
         onClick={() => {
           if (phase !== 'LOBBY' && phase !== 'GAME_OVER') {
             if (window.confirm("Are you sure you want to return home? This will end the game for everyone.")) {
-              window.location.href = '/';
+              socket?.emit('destroy-room', roomCode);
             }
           } else {
-            window.location.href = '/';
+            socket?.emit('destroy-room', roomCode);
           }
         }}
       >
@@ -183,7 +183,7 @@ export default function HostScreen({
             <button
               className="button-primary"
               style={{ padding: '12px 24px', width: 'auto' }}
-              onClick={() => window.location.href = '/'}
+              onClick={() => socket?.emit('destroy-room', roomCode)}
             >
               Back to home page
             </button>
